@@ -11,7 +11,7 @@
 SSD1306Wire display(0x3c, SDA, SCL, GEOMETRY_64_48);
 
 //Dividir el problema por estados (armado y desarmado)
-//la exploción que sea un mensaje *Boom!* en pantalla
+//la exploción que incluya un mensaje *Boom!* en pantalla
 enum class BombStates {SETINGS, WAITING_PASSWORD, CHECKING_PASSWORD, TOTAL_ANIQUILATION};
 
 boolean IsCorrectPassword = false;
@@ -33,6 +33,9 @@ void setup() {
   pinMode(DOWN_BTN, INPUT_PULLUP);
   pinMode(ARM_BTN, INPUT_PULLUP);
   Serial.begin(115200); //En caso de que necesitemos el puerto Serial
+  display.init();
+  display.setContrast(255);
+  display.clear();
 
 }
 
@@ -47,11 +50,17 @@ void desarmado() {
     switch (evBtnsData) {
       case DOWN_BTN:
         //Aumenta 1 seg la cuenta regrestiva
-        countdownTime = countdownTime + 1000;
+        if (countdownTime ≤20000 && countdownTime≥60000) {
+          countdownTime = countdownTime + 1000;
+          //Imprime countdownTime en pantalla
+        }
         break;
       case UP_BTN:
         // disminuye 1 seg la cuenta regresiva
-        countdownTime = countdownTime - 1000;
+        if (countdownTime ≤20000 && countdownTime≥60000) {
+          countdownTime = countdownTime - 1000;
+          //Imprime countdownTime en pantalla
+        }
         break;
       case ARM_BTN:
         //arma la bomba
@@ -72,6 +81,7 @@ void armado() {
   static uint32_t previousMillis1 = 0;
   static uint8_t led_countState = LOW;
   uint32_t currentMillis1 = millis();
+  static BombStates bombStates =  BombStates::SETINGS;
   //Muestra cuenta regresiva en la pantalla
 
   //Enciende y apaga el led de armado
@@ -101,6 +111,14 @@ void armado() {
     }
   }
 
+  if (IsCorrectPassword = true){
+    //se pausa la cuenta atrás 
+    //vuelve al estado configuracion
+    bombStates = BombStates::SETINGS;
+  }
+  else {
+    //se da/continua la cuenta atrás 
+  }
 
 }
 
@@ -122,22 +140,35 @@ void bntsTask() {
     evBtnsData = DOWN_BTN;
     Serial.println("Boton Precionado:DOWN_BTN");
   }
-  else if(digitalRead(UP_BTN) == LOW) {
-      evBtns = true;
-      evBtnsData = UP_BTN;
-      Serial.println("Boton Precionado:UP_BTN");
-    }
-  else if(digitalRead(ARM_BTN) == LOW) {
-      evBtns = true;
-      evBtnsData = ARM_BTN;
-      Serial.println("Boton Precionado:ARM_BTN");
-    }
+  else if (digitalRead(UP_BTN) == LOW) {
+    evBtns = true;
+    evBtnsData = UP_BTN;
+    Serial.println("Boton Precionado:UP_BTN");
+  }
+  else if (digitalRead(ARM_BTN) == LOW) {
+    evBtns = true;
+    evBtnsData = ARM_BTN;
+    Serial.println("Boton Precionado:ARM_BTN");
+  }
   else {
     evBtns == false;
   }
 }
+void explotionTask(){
+  //Solo se debería activar cuando la cuenta regresiva llegue a cero
+  if ( countdownTime < 0){
+    digitalWrite(LED_COUNT, HIGH);
+    Serial.println("Boom!! Fatal Aniquilation");
+    delay(1000); //Porque si explotó no puede hacer nada
+   
+    //vuelve al estado configuracion
+    bombStates = BombStates::SETINGS;
+    
+  }
+}
 
 void loop() {
+  //Averiguar de uq etipo de datos pueso hacer los punteros
   //uint8_t *pCorrectPass = &CorrectPassword;
   //uint8_t *qUserPass = &UserPassword;
 
@@ -147,4 +178,5 @@ void loop() {
   //El Pulsador ARM arma la bomba (cambia de estado)
 
   armado();
+  
 }
