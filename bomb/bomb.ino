@@ -11,15 +11,14 @@
 SSD1306Wire display(0x3c, SDA, SCL, GEOMETRY_64_48);
 
 //Dividir el problema por estados (armado y desarmado)
-//la exploción que incluya un mensaje *Boom!* en pantalla
 enum class BombStates {SETINGS, WAITING_PASSWORD, CHECKING_PASSWORD, TOTAL_ANIQUILATION};
 
 boolean IsCorrectPassword = false;
 boolean evBtns = false; //Nos avisa cuando el evento Btns está activo...
 uint8_t evBtnsData = 0; //nos dece que botón se precinó
 uint32_t countdownTime = 20000; //Tiempo d ela cuenta regresiva, por defoult es 20 seg
-
 const uint32_t TimeLED_COUNT = 500; // 1Hz Tiempo Led contador
+
 //Arreglo para almacenar la clave correcta y la clave del usuario:
 String CorrectPassword[] = {"UP_BTN", "UP_BTN", "DOWN_BTN", "DOWN_BTN", "UP_BTN", "DOWN_BTN", "ARM_BTN"};
 String UserPassword[] = { "", "", "", "", "", "", "",};
@@ -32,32 +31,33 @@ void setup() {
   pinMode(UP_BTN, INPUT_PULLUP); //Decimos que son pulsadores
   pinMode(DOWN_BTN, INPUT_PULLUP);
   pinMode(ARM_BTN, INPUT_PULLUP);
-  Serial.begin(115200); //En caso de que necesitemos el puerto Serial
-  display.init();
+  Serial.begin(115200); //Para usar el puerto Serial
+  display.init(); //Para usar la pantalla
   display.setContrast(255);
   display.clear();
 
 }
 
 void desarmado() {
+
   //Inicia en estado de configuración:
   static BombStates bombStates =  BombStates::SETINGS;
+
   //Permite configurar el tiempo (entre 10-60 seg)
-
   if (evBtns == true) {
-
     evBtns = false; //Consumo el evento
+    //Segun el botón que presinó
     switch (evBtnsData) {
       case DOWN_BTN:
         //Aumenta 1 seg la cuenta regrestiva
-        if (countdownTime ≤20000 && countdownTime≥60000) {
+        if (countdownTime < 60000) {
           countdownTime = countdownTime + 1000;
           //Imprime countdownTime en pantalla
         }
         break;
       case UP_BTN:
         // disminuye 1 seg la cuenta regresiva
-        if (countdownTime ≤20000 && countdownTime≥60000) {
+        if (countdownTime > 20000) {
           countdownTime = countdownTime - 1000;
           //Imprime countdownTime en pantalla
         }
@@ -67,7 +67,6 @@ void desarmado() {
         bombStates = BombStates::WAITING_PASSWORD;
         Serial.println("BombStates::WAITING_PASSWORD");
         break;
-
     }
 
     //Mantiene el led Contador siempre encendido
@@ -79,8 +78,10 @@ void desarmado() {
 void armado() {
 
   static uint32_t previousMillis1 = 0;
+  static uint32_t previousTMinus = 0;
   static uint8_t led_countState = LOW;
   uint32_t currentMillis1 = millis();
+  uint32_t currentTMinus = millis();
   static BombStates bombStates =  BombStates::SETINGS;
   //Muestra cuenta regresiva en la pantalla
 
@@ -97,27 +98,18 @@ void armado() {
 
   if (evBtns == true) {
     evBtns = false; //Consumo el evento
-    switch (evBtnsData) {
-      case DOWN_BTN:
+    //aquí deberia registrar los botenes almacenados en el arrego
+    //for
 
-        break;
-      case UP_BTN:
-
-        break;
-      case ARM_BTN:
-
-        break;
-
-    }
   }
-
-  if (IsCorrectPassword = true){
-    //se pausa la cuenta atrás 
+  
+  if (IsCorrectPassword = true) {
+    //se pausa la cuenta atrás
     //vuelve al estado configuracion
     bombStates = BombStates::SETINGS;
   }
   else {
-    //se da/continua la cuenta atrás 
+    //se da/continua la cuenta atrás
   }
 
 }
@@ -154,16 +146,19 @@ void bntsTask() {
     evBtns == false;
   }
 }
-void explotionTask(){
+void explotionTask() {
   //Solo se debería activar cuando la cuenta regresiva llegue a cero
-  if ( countdownTime < 0){
+  static BombStates bombStates =  BombStates::WAITING_PASSWORD;
+  if ( countdownTime < 0) {
+
     digitalWrite(LED_COUNT, HIGH);
     Serial.println("Boom!! Fatal Aniquilation");
     delay(1000); //Porque si explotó no puede hacer nada
-   
+
     //vuelve al estado configuracion
     bombStates = BombStates::SETINGS;
-    
+
+
   }
 }
 
@@ -178,5 +173,5 @@ void loop() {
   //El Pulsador ARM arma la bomba (cambia de estado)
 
   armado();
-  
+
 }
