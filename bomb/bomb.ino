@@ -33,6 +33,7 @@ void bntsTask() {
   static BntsStates bntsStates = BntsStates::INIT;
   static uint32_t referenceTime;
   const uint32_t STABLETIMEOUT = 100;
+  static uint8_t pushBtn; //Me permite saber que botón fue presionado
 
   switch (bntsStates) {
     case BntsStates::INIT: {
@@ -43,28 +44,81 @@ void bntsTask() {
         break;
       }
     case BntsStates::WAITING_PRESS: {
+
         if (digitalRead(DOWN_BTN) == LOW) {
           referenceTime = millis();
+          pushBtn = DOWN_BTN;
           bntsStates = BntsStates::WAITING_STABLE;
         }
+        else if (digitalRead(UP_BTN) == LOW) {
+          referenceTime = millis();
+          pushBtn = UP_BTN;
+          bntsStates = BntsStates::WAITING_STABLE;
+        }
+        else if (digitalRead(ARM_BTN) == LOW) {
+          referenceTime = millis();
+          pushBtn = ARM_BTN;
+          bntsStates = BntsStates::WAITING_STABLE;
+        }
+
         break;
       }
     case BntsStates::WAITING_STABLE: {
-        if (digitalRead(DOWN_BTN) == HIGH) {
-          bntsStates = BntsStates::WAITING_PRESS;
+
+        if (pushBtn = DOWN_BTN) {
+          if (digitalRead(DOWN_BTN) == HIGH) {
+            bntsStates = BntsStates::WAITING_PRESS;
+          }
+          else if ( (millis() - referenceTime) >= STABLETIMEOUT) {
+            bntsStates = BntsStates::WAITING_RELEASE;
+          }
         }
-        else if ( (millis() - referenceTime) >= STABLETIMEOUT) {
-          bntsStates = BntsStates::WAITING_RELEASE;
+        else if (pushBtn = UP_BTN) {
+          if (digitalRead(UP_BTN) == HIGH) {
+            bntsStates = BntsStates::WAITING_PRESS;
+          }
+          else if ( (millis() - referenceTime) >= STABLETIMEOUT) {
+            bntsStates = BntsStates::WAITING_RELEASE;
+          }
         }
+        else if (pushBtn = ARM_BTN) {
+          if (digitalRead(ARM_BTN) == HIGH) {
+            bntsStates = BntsStates::WAITING_PRESS;
+          }
+          else if ( (millis() - referenceTime) >= STABLETIMEOUT) {
+            bntsStates = BntsStates::WAITING_RELEASE;
+          }
+        }
+
         break;
       }
     case BntsStates::WAITING_RELEASE: {
-        if (digitalRead(DOWN_BTN) == HIGH) {
-          evBtns = true;
-          evBtnsData = DOWN_BTN;
-          Serial.println("DOWN_BTN");
-          bntsStates = BntsStates::WAITING_PRESS;
+
+        if (pushBtn = DOWN_BTN) {
+          if (digitalRead(DOWN_BTN) == HIGH) {
+            evBtns = true;
+            evBtnsData = DOWN_BTN;
+            Serial.println("DOWN_BTN");
+            bntsStates = BntsStates::WAITING_PRESS;
+          }
         }
+        else if (pushBtn = UP_BTN) {
+          if (digitalRead(UP_BTN) == HIGH) {
+            evBtns = true;
+            evBtnsData = UP_BTN;
+            Serial.println("UP_BTN");
+            bntsStates = BntsStates::WAITING_PRESS;
+          }
+        }
+        else if (pushBtn = ARM_BTN) {
+          if (digitalRead(ARM_BTN) == HIGH) {
+            evBtns = true;
+            evBtnsData = ARM_BTN;
+            Serial.println("ARM_BTN");
+            bntsStates = BntsStates::WAITING_PRESS;
+          }
+        }
+
         break;
       }
     default:
@@ -73,8 +127,6 @@ void bntsTask() {
   }
 
   /*
-
-
                evBtns = true;
           evBtnsData = DOWN_BTN;
           Serial.println("Boton Precionado:DOWN_BTN");
@@ -127,14 +179,26 @@ void bombTask() {
 
           if (evBtnsData == DOWN_BTN) {
             if (counter > 10) {
-              counter--;
+              counter--; //Disminue el timer 1 seg
             }
             display.clear();
             display.drawString(0, 5, String(counter));
             display.display();
           }
-
+          else if (evBtnsData == UP_BTN) {
+            if (counter < 60) {
+              counter++; //Aumenta el timer 1 seg
+            }
+            display.clear();
+            display.drawString(0, 5, String(counter));
+            display.display();
+          }
+          else if (evBtnsData == ARM_BTN) {
+            bombStates = BombStates::COUNTING
+            Serial.println("BombStates::COUNTING");
+          }
         }
+        
         break;
       }
     case BombStates::COUNTING: {
@@ -181,7 +245,6 @@ void serialTask() {
 
 
 /*
-  //Dividir el problema por estados (armado y desarmado)
   enum class BombStates {SETINGS, WAITING_PASSWORD, CHECKING_PASSWORD, TOTAL_ANIQUILATION};
 
   boolean IsCorrectPassword = false;
@@ -190,8 +253,8 @@ void serialTask() {
   const uint32_t TimeLED_COUNT = 500; // 1Hz Tiempo Led contador
 
   //Arreglo para almacenar la clave correcta y la clave del usuario:
-  String CorrectPassword[] = {"UP_BTN", "UP_BTN", "DOWN_BTN", "DOWN_BTN", "UP_BTN", "DOWN_BTN", "ARM_BTN"};
-  String UserPassword[] = { "", "", "", "", "", "", "",};
+  uint8_t CorrectPassword[] = {"UP_BTN", "UP_BTN", "DOWN_BTN", "DOWN_BTN", "UP_BTN", "DOWN_BTN", "ARM_BTN"};
+  uint8_t UserPassword[] = { "", "", "", "", "", "", "",};
 
 
 
