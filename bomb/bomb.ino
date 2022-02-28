@@ -187,34 +187,49 @@ void bombTask() {
     case BombStates::COUNTING: {
 
         const uint32_t TimeLED_COUNT = 500; // 1Hz Tiempo Led contador
-        static uint32_t previousMillis = 0;
         static uint32_t previousTMinus = 0;
         static uint8_t led_countState = LOW;
-        uint32_t currentMillis = millis();
         uint32_t currentTMinus = millis();
         //bool boombState = false;
-        
+
         //Enciende y apaga el led de armado
-        if (currentMillis - previousMillis >= TimeLED_COUNT) {
-          previousMillis = currentMillis;
+        if (currentTMinus - previousTMinus >= TimeLED_COUNT) {
+          previousTMinus = currentTMinus;
           if (led_countState == LOW) {
             led_countState = HIGH;
           } else {
             led_countState = LOW;
+            counter--; //Convenientemente actualiza la cuenta atrás cada 1 seg
+            display.clear();
+            display.drawString(0, 5, String(counter));
+            display.display();
           }
+          digitalWrite(LED_COUNT, led_countState);
         }
-        digitalWrite(LED_COUNT, led_countState);
-        //Muestra la cuenta regresiva
+        if (counter == 0) {
+          bombStates = BombStates::BOOM;
+        }
+        //Falta la clave
 
         /*
-        if (evBtns == true) {
+          if (evBtns == true) {
           evBtns = false; //Consumo el evento
           //aquí deberia registrar los botenes almacenados en el arrego
           //for
-        }*/
+          }*/
         break;
       }
     case BombStates::BOOM: {
+
+        digitalWrite(LED_COUNT, LOW); //Apagamos el Led contador
+        digitalWrite(BOMB_OUT, HIGH); //Encendemos el Led de explosión
+        Serial.println("BOOM! Fatal ANIQUILATION!!"); //Informamos por el Serial
+        display.clear();
+        display.drawString(9, 0, "BOOM!"); //Imprimimos en pantalla
+        display.display();
+        delay(2500); //Tiempo que "dura la explosión"
+        bombState = BombStates::INIT; //Volvemos al seudo estado de inicio
+        
         break;
       }
     default:
@@ -253,42 +268,14 @@ void serialTask() {
   }
 }
 
-
 /*
   boolean IsCorrectPassword = false;
-
-
-  const uint32_t TimeLED_COUNT = 500; // 1Hz Tiempo Led contador
-
   //Arreglo para almacenar la clave correcta y la clave del usuario:
   uint8_t CorrectPassword[] = {"UP_BTN", "UP_BTN", "DOWN_BTN", "DOWN_BTN", "UP_BTN", "DOWN_BTN", "ARM_BTN"};
   uint8_t UserPassword[] = { "", "", "", "", "", "", "",}
 
   void armado() {
 
-  static uint32_t previousMillis1 = 0;
-  static uint32_t previousTMinus = 0;
-  static uint8_t led_countState = LOW;
-  uint32_t currentMillis1 = millis();
-  uint32_t currentTMinus = millis();
-  static BombStates bombStates =  BombStates::SETINGS;
-  //Muestra cuenta regresiva en la pantalla
-
-  //Enciende y apaga el led de armado
-  if (currentMillis1 - previousMillis1 >= TimeLED_COUNT) {
-    previousMillis1 = currentMillis1;
-    if (led_countState == LOW) {
-      led_countState = HIGH;
-    } else {
-      led_countState = LOW;
-    }
-  }
-  digitalWrite(LED_COUNT, led_countState);
-  if (evBtns == true) {
-    evBtns = false; //Consumo el evento
-    //aquí deberia registrar los botenes almacenados en el arrego
-    //for
-  }
   if (IsCorrectPassword = true) {
     //se pausa la cuenta atrás
     //vuelve al estado configuracion
@@ -307,16 +294,5 @@ void serialTask() {
     IsCorrectPassword = false;
   }
   //retorna IsCorrectPassword
-  }
-  void explotionTask() {
-  //Solo se debería activar cuando la cuenta regresiva llegue a cero
-  static BombStates bombStates =  BombStates::WAITING_PASSWORD;
-  if ( countdownTime < 0) {
-    digitalWrite(LED_COUNT, HIGH);
-    Serial.println("Boom!! Fatal Aniquilation");
-    delay(1000); //Porque si explotó no puede hacer nada
-    //vuelve al estado configuracion
-    bombStates = BombStates::SETINGS;
-  }
   }
 */
