@@ -46,18 +46,18 @@ void bntsTask() {
     case BntsStates::WAITING_PRESS: {
 
         if (digitalRead(DOWN_BTN) == LOW) {
-          referenceTime = millis();
           pushBtn = DOWN_BTN;
+          referenceTime = millis();
           bntsStates = BntsStates::WAITING_STABLE;
         }
         else if (digitalRead(UP_BTN) == LOW) {
-          referenceTime = millis();
           pushBtn = UP_BTN;
+          referenceTime = millis();
           bntsStates = BntsStates::WAITING_STABLE;
         }
         else if (digitalRead(ARM_BTN) == LOW) {
-          referenceTime = millis();
           pushBtn = ARM_BTN;
+          referenceTime = millis();
           bntsStates = BntsStates::WAITING_STABLE;
         }
 
@@ -65,7 +65,7 @@ void bntsTask() {
       }
     case BntsStates::WAITING_STABLE: {
 
-        if (pushBtn = DOWN_BTN) {
+        if (pushBtn == DOWN_BTN) {
           if (digitalRead(DOWN_BTN) == HIGH) {
             bntsStates = BntsStates::WAITING_PRESS;
           }
@@ -73,7 +73,7 @@ void bntsTask() {
             bntsStates = BntsStates::WAITING_RELEASE;
           }
         }
-        else if (pushBtn = UP_BTN) {
+        else if (pushBtn == UP_BTN) {
           if (digitalRead(UP_BTN) == HIGH) {
             bntsStates = BntsStates::WAITING_PRESS;
           }
@@ -81,7 +81,7 @@ void bntsTask() {
             bntsStates = BntsStates::WAITING_RELEASE;
           }
         }
-        else if (pushBtn = ARM_BTN) {
+        else if (pushBtn == ARM_BTN) {
           if (digitalRead(ARM_BTN) == HIGH) {
             bntsStates = BntsStates::WAITING_PRESS;
           }
@@ -94,7 +94,7 @@ void bntsTask() {
       }
     case BntsStates::WAITING_RELEASE: {
 
-        if (pushBtn = DOWN_BTN) {
+        if (pushBtn == DOWN_BTN) {
           if (digitalRead(DOWN_BTN) == HIGH) {
             evBtns = true;
             evBtnsData = DOWN_BTN;
@@ -102,7 +102,7 @@ void bntsTask() {
             bntsStates = BntsStates::WAITING_PRESS;
           }
         }
-        else if (pushBtn = UP_BTN) {
+        else if (pushBtn == UP_BTN) {
           if (digitalRead(UP_BTN) == HIGH) {
             evBtns = true;
             evBtnsData = UP_BTN;
@@ -110,7 +110,7 @@ void bntsTask() {
             bntsStates = BntsStates::WAITING_PRESS;
           }
         }
-        else if (pushBtn = ARM_BTN) {
+        else if (pushBtn == ARM_BTN) {
           if (digitalRead(ARM_BTN) == HIGH) {
             evBtns = true;
             evBtnsData = ARM_BTN;
@@ -143,6 +143,7 @@ void bombTask() {
         display.setTextAlignment(TEXT_ALIGN_LEFT);
         display.setFont(ArialMT_Plain_16);
 
+        digitalWrite(BOMB_OUT, LOW);
         counter = 20; //Tiempo para la Cuenta regresiva (20 seg)
         display.clear();
         display.drawString(0, 5, String(counter));
@@ -227,9 +228,9 @@ void bombTask() {
         display.clear();
         display.drawString(9, 0, "BOOM!"); //Imprimimos en pantalla
         display.display();
-        delay(2500); //Tiempo que "dura la explosión"
-        bombState = BombStates::INIT; //Volvemos al seudo estado de inicio
-        
+        delay(3500); //Tiempo que "dura la explosión"
+        bombStates = BombStates::INIT; //Volvemos al seudo-estado de inicio
+
         break;
       }
     default:
@@ -257,6 +258,16 @@ void serialTask() {
             evBtns = true;
             evBtnsData = DOWN_BTN;
             Serial.println("DOWN_BTN");
+          }
+          else if (dataIn == 'u') {
+            evBtns = true;
+            evBtnsData = UP_BTN;
+            Serial.println("UP_BTN");
+          }
+          else if (dataIn == 'a') {
+            evBtns = true;
+            evBtnsData = ARM_BTN;
+            Serial.println("ARM_BTN");
           }
         }
 
