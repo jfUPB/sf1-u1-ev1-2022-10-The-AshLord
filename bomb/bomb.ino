@@ -122,6 +122,7 @@ void bntsTask() {
         break;
       }
     default:
+      Serial.println("ERROR.");
       break;
 
   }
@@ -191,7 +192,13 @@ void bombTask() {
         static uint32_t previousTMinus = 0;
         static uint8_t led_countState = LOW;
         uint32_t currentTMinus = millis();
-        //bool boombState = false;
+
+        boolean IsCorrectPassword = false;
+        const uint8_t passLength = 7; //Tamaño maximo del arreglo
+        //Arreglo para almacenar la clave correcta y la clave del usuario:
+        uint8_t CorrectPassword[passLength] = {UP_BTN, UP_BTN, DOWN_BTN, DOWN_BTN, UP_BTN, DOWN_BTN, ARM_BTN};
+        static uint8_t UserPassword[passLength] = { 0, 0, 0, 0, 0, 0, 0};
+        uint8_t passInput = 0; //3 de Botones presionados
 
         //Enciende y apaga el led de armado
         if (currentTMinus - previousTMinus >= TimeLED_COUNT) {
@@ -207,18 +214,40 @@ void bombTask() {
           }
           digitalWrite(LED_COUNT, led_countState);
         }
+        //Activa la bomba cuando la cuenta atrás llegue a cero
         if (counter == 0) {
           bombStates = BombStates::BOOM;
         }
-        //Falta la clave
 
-        /*
-          if (evBtns == true) {
+        //Ingreso de la clave:
+        if (evBtns == true) {
           evBtns = false; //Consumo el evento
-          //aquí deberia registrar los botenes almacenados en el arrego
-          //for
-          }*/
-        break;
+          //Agrega el botón presionado al arreglo
+          if (passInput < passLength)
+          {
+            UserPassword [passLength] = evBtnsData;
+            passInput++;
+          }
+          else if (passInput == passLength)
+          {
+            PasswordCheck (UserPassword, CorrectPassword, passLength, &IsCorrectPassword);
+            if (IsCorrectPassword == true)
+            {
+              display.clear();
+              display.drawString(0, 5, String("Cancel Countdown"));
+              display.drawString(0, 5, String("Bomb Disarm"));
+              display.display();
+              for (uint8_t k = 0; k < passLength; k++)
+              {
+                UserPassword[k] = 0;
+              }
+              delay(3500);
+              bombStates = BombStates::INIT;
+            }
+          }
+
+          break;
+        }
       }
     case BombStates::BOOM: {
 
@@ -239,7 +268,6 @@ void bombTask() {
   }
 
 }
-
 void serialTask() {
   enum class SerialStates {INIT, READING_COMMANDS};
   static SerialStates serialStates = SerialStates::INIT;
@@ -279,31 +307,21 @@ void serialTask() {
   }
 }
 
-/*
-  boolean IsCorrectPassword = false;
-  //Arreglo para almacenar la clave correcta y la clave del usuario:
-  uint8_t CorrectPassword[] = {"UP_BTN", "UP_BTN", "DOWN_BTN", "DOWN_BTN", "UP_BTN", "DOWN_BTN", "ARM_BTN"};
-  uint8_t UserPassword[] = { "", "", "", "", "", "", "",}
+void PasswordCheck(uint8_t *pUserPass, uint8_t *qCorrectPass, uint8_t maxLength, bool *rIsCorrect) {
 
-  void armado() {
+  for (uint8_t i = 0; i < maxLength; i++) {
 
-  if (IsCorrectPassword = true) {
-    //se pausa la cuenta atrás
-    //vuelve al estado configuracion
-    bombStates = BombStates::SETINGS;
+    //Verifica si UserPassword es igual a Password
+    if (qCorrectPass[i] == pUserPass[i]) {
+      *rIsCorrect = true;
+    }
+    else {
+
+      //Si en algún valor son diferentes:
+      *rIsCorrect = false; //cambia IsCorrIsCorrectPassword
+      break;              //y Rompe el ciclo for
+
+    }
   }
-  else {
-    //se da/continua la cuenta atrás
-  }
-  }
-  void passwordCheck(uint8_t *pCorrectPass, uint8_t *qUserPass) {
-  //Compara si CorrectPassword y UserPassword son iguales
-  if (*pCorrectPass == *qUserPass) {
-    IsCorrectPassword = true;
-  }
-  else {
-    IsCorrectPassword = false;
-  }
-  //retorna IsCorrectPassword
-  }
-*/
+
+}
