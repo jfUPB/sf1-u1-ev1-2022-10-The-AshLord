@@ -132,7 +132,7 @@ void bombTask() {
 
   enum class BombStates {INIT, WAITING_CONFIG, COUNTING, BOOM};
   static BombStates bombStates = BombStates::INIT;
-  static uint8_t counter;
+  static uint8_t counter = 20;
 
   switch (bombStates) {
     case BombStates::INIT: {
@@ -150,6 +150,7 @@ void bombTask() {
         display.drawString(0, 5, String(counter));
         display.display();
         bombStates = BombStates::WAITING_CONFIG;
+
         break;
       }
     case BombStates::WAITING_CONFIG: {
@@ -174,12 +175,13 @@ void bombTask() {
             display.display();
           }
           else if (evBtnsData == ARM_BTN) {
-            bombStates = BombStates::COUNTING;
+
             Serial.println("BombStates::COUNTING");
             Serial.println("La Bomba ha sido armado con Exito");
             display.clear();
             display.drawString(0, 5, String("Armado Exitoso"));
             display.display();
+            bombStates = BombStates::COUNTING;
           }
         }
         //Mantiene el led Contador siempre encendido
@@ -197,8 +199,8 @@ void bombTask() {
         const uint8_t passLength = 7; //Tamaño maximo del arreglo
         //Arreglo para almacenar la clave correcta y la clave del usuario:
         uint8_t CorrectPassword[passLength] = {UP_BTN, UP_BTN, DOWN_BTN, DOWN_BTN, UP_BTN, DOWN_BTN, ARM_BTN};
-        static uint8_t UserPassword[passLength] = { 0, 0, 0, 0, 0, 0, 0};
-        uint8_t passInput = 0; //3 de Botones presionados
+        static uint8_t UserPassword[passLength];
+        static uint8_t passInput = 0; //3 de Botones presionados
 
         //Enciende y apaga el led de armado
         if (currentTMinus - previousTMinus >= TimeLED_COUNT) {
@@ -207,47 +209,58 @@ void bombTask() {
             led_countState = HIGH;
           } else {
             led_countState = LOW;
+
+          }
+          digitalWrite(LED_COUNT, led_countState);
+          if (led_countState == HIGH) {
             counter--; //Convenientemente actualiza la cuenta atrás cada 1 seg
             display.clear();
             display.drawString(0, 5, String(counter));
             display.display();
           }
-          digitalWrite(LED_COUNT, led_countState);
+          //Ingreso de la clave:
+          if (evBtns == true) {
+            evBtns = false; //Consumo el evento
+            //Agrega el botón presionado al arreglo
+            if (passInput < passLength)
+            {
+              if (evBtnsData == UP_BTN) {
+              UserPassword[passLength] = evBtnsData;
+            }
+            else if (evBtnsData == DOWN_BTN) {
+              UserPassword[passLength] = evBtnsData;
+            }
+            else if (evBtnsData == ARM_BTN) {  
+              UserPassword[passLength] = evBtnsData;
+            }
+              passInput++;
+            }
+            else if (passInput == passLength)
+            {
+              PasswordCheck (UserPassword, CorrectPassword, passLength, &IsCorrectPassword);
+              if (IsCorrectPassword == true)
+              {
+                display.clear();
+                display.drawString(0, 5, String("Cancel Countdown"));
+                display.drawString(0, 5, String("Bomb Disarm"));
+                display.display();
+                for (uint8_t k = 0; k < passLength; k++)
+                {
+                  UserPassword[k] = 0;
+                }
+                delay(3500);
+                bombStates = BombStates::INIT;
+              }
+            }
+          }
         }
+
         //Activa la bomba cuando la cuenta atrás llegue a cero
-        if (counter == 0) {
+        else if (counter == 0) {
           bombStates = BombStates::BOOM;
         }
 
-        //Ingreso de la clave:
-        if (evBtns == true) {
-          evBtns = false; //Consumo el evento
-          //Agrega el botón presionado al arreglo
-          if (passInput < passLength)
-          {
-            UserPassword [passLength] = evBtnsData;
-            passInput++;
-          }
-          else if (passInput == passLength)
-          {
-            PasswordCheck (UserPassword, CorrectPassword, passLength, &IsCorrectPassword);
-            if (IsCorrectPassword == true)
-            {
-              display.clear();
-              display.drawString(0, 5, String("Cancel Countdown"));
-              display.drawString(0, 5, String("Bomb Disarm"));
-              display.display();
-              for (uint8_t k = 0; k < passLength; k++)
-              {
-                UserPassword[k] = 0;
-              }
-              delay(3500);
-              bombStates = BombStates::INIT;
-            }
-          }
-
-          break;
-        }
+        break;
       }
     case BombStates::BOOM: {
 
